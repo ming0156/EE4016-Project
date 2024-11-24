@@ -1,84 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const csv = require('csv');
+const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
+const multer = require('multer');
+const upload = multer({ dest: 'tmp/image/' });
 let home_controller = require('../controllers/homeController');
 
-router.get('/count', async (req, res) => {
-    let response = await home_controller.getCount();
-    if (response.success == true) {
-        res.status(200).json(response);
-    } else {
-        res.status(404).json(response);
+router.post('/importmp3', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: "File is required" });
     }
-});
+    const mp3FilePath = req.file.path;
+    const spectrogramFilePath = `uploads/${req.file.filename}.png`;
 
-router.get('/csv', async (req, res) => {
-    let response = '';
-    response = await home_controller.getAllMembers(req.query);
-    if (response.success == true) {
-        res.setHeader("Content-Disposition", "swaggerDownload=\"attachment\"; filename=\"member.csv\"");
-        csv.stringify(response.data, {
-            columns: [
-                'memberID',
-                'username',
-                'transferedFromID',
-                'membership',
-                'balance',
-                'bonus',
-                'redemptionTotal',
-                'address',
-                'district',
-                'gender',
-                'bday',
-                'tel',
-                'email',
-                'buildingType',
-                'occupation',
-                'remarks',
-                'updateAt',
-                'createAt',
-                'qtyBAT',
-                'qtyBook',
-                'qtyCloth',
-                'qtyFLT',
-                'qtyFoodWaste',
-                'qtyGlassBottle',
-                'qtyMetal1',
-                'qtyMetal2',
-                'qtyPlastic1',
-                'qtyPlastic2',
-                'qtyREE',
-                'qtySEA',
-                'qtyToner',
-                'qtyTP',
-                'qtyWP1',
-                'qtyWP2',
-                'qtyWP3',
-                'qtyMISC1',
-                'qtyMISC2',
-                'qtyMISC3',
-                'qtyMISC4',
-                'qtyMISC5',
-                'qtyMISC6',
-                'qtyMISC7',
-                'qtyMISC8'
-            ],
-            header: true,
-            cast: {
-                date: v => v.toISOString(),
-                string: (v, context) => {
-                    switch (context.column) {
-                        case 'memberID':
-                            return `="${v}"`;
-                        default:
-                            return v;
-                    }
-                }
-            }
-        }).pipe(res);
-    } else {
-        res.status(500).json(response);
-    }
-});
+    // Convert MP3 to WAV using ffmpeg
+    const wavFilePath = `uploads/${req.file.filename}.wav`;
 
+    ffmpeg(mp3FilePath)
+        .toFormat('wav')
+        .on('end', () => {
+            console.log('Conversion to WAV completed. Generating spectrogram...');
+            home_controller.generateSpectrogram(wavFilePath, spectrogramFilePath)
+                .then(() => {
+                    // Clean up files
+                    fs.unlinkSync(mp3FilePath);
+                    fs.unlinkSync(wavFilePath);
+                    res.json({ success: true, spectrogram: spectrogramFilePath });
+                })
+                .catch(err => {
+                    console.error(err);
+                    res.status(500).json({ success: false, message: "Failed to generate spectrogram" });
+                });
+        })
+        .on('error', (err) => {
+            console.error(err);
+            res.status(500).json({ success: false, message: "Failed to convert MP3" });
+        })
+        .save(wavFilePath);
+});
 module.exports = router;

@@ -7,12 +7,11 @@ const fs = require('fs');
 const csv = require('csv');
 const multer = require('multer');
 const upload = multer({ dest: 'tmp/csv/' });
-const record_controller = require('../controllers/recordController');
 const Gift = require('../models/gift');
 
 //get All gift info
 router.get('/health', async (req, res) => {
-    let response = record_controller.health();
+    let response = gift_controller.health();
     if (response.success == true) {
         res.status(200).json(response);
     } else {
@@ -22,7 +21,7 @@ router.get('/health', async (req, res) => {
 
 //get All gift info
 router.get('/', async (req, res) => {
-    let response = await record_controller.getAllGifts(req.query);
+    let response = await gift_controller.getAllGifts(req.query);
     if (response.success == true) {
         res.status(200).json(response);
     } else {
@@ -34,7 +33,7 @@ router.get('/', async (req, res) => {
 
 // csv export
 // router.get('/csv', async (req, res) => {
-//     let response = await record_controller.findGiftsByCSVFilter(req.query);
+//     let response = await gift_controller.findGiftsByCSVFilter(req.query);
 //     if (response.success == true) {
 //         res.setHeader("Content-Disposition", "swaggerDownload=\"attachment\"; filename=\"response.csv\"");
 //         console.log(response.data)
@@ -60,7 +59,7 @@ router.get('/', async (req, res) => {
 //     }
 // });
 router.get('/csv', async (req, res) => {
-    let response = await record_controller.findGiftsByCSVFilter(req.query);
+    let response = await gift_controller.findGiftsByCSVFilter(req.query);
 
     if (response.success) {
         // Set response headers for CSV download
@@ -212,7 +211,7 @@ router.post('/giftcsv', upload.single('file'), async (req, res) => {
             // validation (unique)
             // validation_promises.push(new Promise(async (resolve, reject) => {
             //     try {
-            //         const exists = await record_controller.checkGiftExists(data.giftId, appendError).catch(err => reject(err));
+            //         const exists = await gift_controller.checkGiftExists(data.giftId, appendError).catch(err => reject(err));
             //         // console.log(`exists: ${exists}`)
             //         if (exists) appendError(rowNumber, `Gift ${data.giftId} already exists in database`);
             //         resolve(exists);
@@ -266,7 +265,7 @@ router.post('/giftcsv', upload.single('file'), async (req, res) => {
                 // console.log('CSV Data:', JSON.stringify(giftsWithUpdatedAt, null, 2));
                 let i = 0;
                 for (const line of csvData) {
-                    respUpsertTxn = await record_controller.updateGiftById(line);
+                    respUpsertTxn = await gift_controller.updateGiftById(line);
                     // if (i % 1000 === 0)
                     //     await new Promise(r => setTimeout(r, 50));
                     if (!respUpsertTxn.success) {
@@ -277,14 +276,14 @@ router.post('/giftcsv', upload.single('file'), async (req, res) => {
                     i++;
                 }
                 // csvData.map(async line => {
-                //     respUpsertTxn = await record_controller.updateGiftById(line);
+                //     respUpsertTxn = await gift_controller.updateGiftById(line);
                 //     if (!respUpsertTxn.success) {
                 //         res.status(500).json(respUpsertTxn);
                 //         sessionG.abortTransaction();
                 //         return;
                 //     }
                 // });
-                // respAddTxn = await record_controller.addGifts(sessionG, newCSVData);
+                // respAddTxn = await gift_controller.addGifts(sessionG, newCSVData);
                 // if (!respAddTxn.success) {
                 //     res.status(500).json(respAddTxn);
                 //     sessionG.abortTransaction();
@@ -370,7 +369,7 @@ router.post('/couponcsv', upload.single('file'), async (req, res) => {
             // validation (unique)
             // validation_promises.push(new Promise(async (resolve, reject) => {
             //     try {
-            //         const exists = await record_controller.checkGiftExists(data.giftId, appendError).catch(err => reject(err));
+            //         const exists = await gift_controller.checkGiftExists(data.giftId, appendError).catch(err => reject(err));
             //         // console.log(`exists: ${exists}`)
             //         if (exists) appendError(rowNumber, `Gift ${data.giftId} already exists in database`);
             //         resolve(exists);
@@ -421,7 +420,7 @@ router.post('/couponcsv', upload.single('file'), async (req, res) => {
                 // //     updatedAt: new Date(Date.now() + 28800000) // Add updatedAt field with current time
                 // // }];
                 // // console.log('CSV Data:', JSON.stringify(giftsWithUpdatedAt, null, 2));
-                // respAddTxn = await record_controller.addGifts(sessionG, csvData);
+                // respAddTxn = await gift_controller.addGifts(sessionG, csvData);
                 // if (!respAddTxn.success) {
                 //     res.status(500).json(respAddTxn);
                 //     sessionG.abortTransaction();
@@ -438,7 +437,7 @@ router.post('/couponcsv', upload.single('file'), async (req, res) => {
                 // console.log('CSV Data:', JSON.stringify(giftsWithUpdatedAt, null, 2));
                 let i = 0;
                 for (const line of csvData) {
-                    respUpsertTxn = await record_controller.updateGiftById(line);
+                    respUpsertTxn = await gift_controller.updateGiftById(line);
                     // if (i % 1000 === 0)
                     //     await new Promise(r => setTimeout(r, 50));
                     if (!respUpsertTxn.success) {
@@ -493,7 +492,7 @@ router.post('/',
             });
         }
 
-        let response = await record_controller.addGift(req.body);
+        let response = await gift_controller.addGift(req.body);
         console.log(`rutes`, req.body)
 
         if (response.success == true) {
@@ -506,7 +505,7 @@ router.post('/',
 //get All gift by id
 router.get('/:giftId', async (req, res) => {
     console.log(req.params.giftId)
-    let response = await record_controller.getGiftById(req.params.giftId);
+    let response = await gift_controller.getGiftById(req.params.giftId);
     if (response.success == true) {
         res.status(200).json(response);
     } else {
@@ -537,7 +536,7 @@ router.put('/',
         }
 
         //only allow to change username and role only
-        let response = await record_controller.updateGiftById(req.body);
+        let response = await gift_controller.updateGiftById(req.body);
         if (response.success == true) {
             res.status(200).json(response);
         } else {
@@ -547,7 +546,7 @@ router.put('/',
 
 //remove gift    
 router.delete('/:giftId', async (req, res) => {
-    let response = await record_controller.removeGiftById(req.params.giftId);
+    let response = await gift_controller.removeGiftById(req.params.giftId);
     if (response.success == true) {
         res.status(200).json(response);
     } else {

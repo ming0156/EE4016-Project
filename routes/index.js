@@ -8,7 +8,7 @@ const record = require('./record');
 const version = require('./version')
 
 router.use('/hello', hello);
-router.use('/member', home);
+router.use('/home', home);
 router.use('/menuItem', menuItem);
 router.use('/gift', record);
 router.use('/version', version)
